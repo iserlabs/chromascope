@@ -4,22 +4,31 @@ import { createControls } from "./ui/controls.js";
 import { attachScopeInteraction } from "./interaction/scope-interaction.js";
 import type { PixelData, ChromascopeSettings } from "./types.js";
 
-const canvas = document.getElementById("scope-canvas") as HTMLCanvasElement | null;
-const container = document.getElementById("scope-canvas-container") as HTMLElement | null;
-const controlsEl = document.getElementById("controls-container") as HTMLElement | null;
+// TypeScript's control-flow narrowing carries the post-throw non-null type
+// through the same scope but loses it inside closure bodies (resize/draw
+// reference these later). Re-bind to fresh consts so the inferred types
+// stay non-null everywhere.
+const canvasMaybe = document.getElementById("scope-canvas") as HTMLCanvasElement | null;
+const containerMaybe = document.getElementById("scope-canvas-container") as HTMLElement | null;
+const controlsElMaybe = document.getElementById("controls-container") as HTMLElement | null;
 
-if (!canvas || !container || !controlsEl) {
+if (!canvasMaybe || !containerMaybe || !controlsElMaybe) {
   console.warn("Chromascope: required DOM elements not found (scope-canvas, scope-canvas-container, controls-container)");
   throw new Error("Chromascope: missing required DOM elements");
 }
 
+const canvas: HTMLCanvasElement = canvasMaybe;
+const container: HTMLElement = containerMaybe;
+const controlsEl: HTMLElement = controlsElMaybe;
+
 canvas.setAttribute("role", "img");
 canvas.setAttribute("aria-label", "Vectorscope visualization showing color distribution");
 
-const ctx = canvas.getContext("2d");
-if (!ctx) {
+const ctxMaybe = canvas.getContext("2d");
+if (!ctxMaybe) {
   throw new Error("Chromascope: failed to get 2d canvas context");
 }
+const ctx: CanvasRenderingContext2D = ctxMaybe;
 
 const scope = new Chromascope();
 
@@ -138,7 +147,7 @@ if (new URLSearchParams(window.location.search).has("test")) {
         rgb[dst + 1] = rgbaData[src + 1];
         rgb[dst + 2] = rgbaData[src + 2];
       }
-      scope.setPixels({ data: rgb, width, height });
+      scope.setPixels({ data: rgb, width, height, colorProfile: "sRGB" });
       draw();
     },
     updateSettings(partial) {

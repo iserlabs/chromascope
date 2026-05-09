@@ -9,7 +9,8 @@
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:lib": "vite build --config vite.config.lib.ts"
+    "build:lib": "vite build --config vite.config.lib.ts",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "~6.0",

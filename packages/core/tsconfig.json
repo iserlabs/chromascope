@@ -1,9 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
+    // Note: tsc is not used to emit — Vite (vite.config.ts) drives the build,
+    // Vitest drives tests. This config exists for editor type-checking and
+    // CI `tsc --noEmit` validation. `noEmit` keeps tsc out of the build path.
+    "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src/**/*", "test/**/*"],
+  // visual-regression runs under Playwright with Node APIs (Buffer, process, fs).
+  // It has its own runtime; excluding it keeps tsc focused on the browser-side
+  // typing surface and avoids needing @types/node in the core's tsconfig.
+  "exclude": ["test/visual-regression.test.ts"]
 }

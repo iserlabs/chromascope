@@ -3,11 +3,15 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**", ".next/**", "!.next/cache/**"]
+      "outputs": ["build/**", "core/scope-bundle.js", "core/index.html"]
     },
     "build:lib": {
       "dependsOn": ["^build"],
       "outputs": ["build-lib/**"]
+    },
+    "@chromascope/processor#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["target/debug/processor", "target/debug/processor.exe"]
     },
     "dev": {
       "cache": false,
