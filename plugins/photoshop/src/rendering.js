@@ -2,6 +2,14 @@
 // These functions have no dependency on UXP APIs (photoshop, uxp, imaging)
 // or global state (window.__chromascope), making them unit-testable.
 
+// Skin-tone reference line: angle on the vectorscope wheel where typical
+// human-skin chrominance lands. 123° matches the convention used by the Rust
+// renderer (SKIN_TONE_ANGLE) and is documented in the project README.
+var SKIN_TONE_ANGLE_DEG = 123;
+// Skin-tone fill color (RGB) used when blending the line onto the buffer.
+// Matches Rust SKIN_TONE = Rgb([180, 120, 60]).
+var SKIN_TONE_RGB = [180, 120, 60];
+
 // Minimal 3×5 bitmap font for digits and degree symbol.
 // UXP canvas doesn't support fillText reliably, so we rasterize text manually.
 // Each glyph is 5 rows of 3-bit bitmasks (MSB = leftmost pixel).
@@ -227,7 +235,14 @@ function renderToBuffer(size, pixels, densityMode, showSkinTone) {
   if (!densityMode) densityMode = "scatter";
 
   var data = pixels.data;
+  // Defensive: if a caller passes a misreported width/height vs. a short
+  // data array, clip total to what the buffer actually contains. Without
+  // this, the inner per-pixel loop would index past the array end and pull
+  // `undefined`s through the math (which silently maps to NaN/0 in numeric
+  // ops, producing visually-broken plots instead of an obvious failure).
   var total = pixels.width * pixels.height;
+  var maxFromData = (data.length / 3) | 0;
+  if (total > maxFromData) total = maxFromData;
 
   // Inline HSL mapping: hue → angle, saturation → radius.
   // Avoids function calls and object allocation per pixel — critical for UXP performance.
@@ -426,13 +441,14 @@ function renderToBuffer(size, pixels, densityMode, showSkinTone) {
     }
   }
 
-  // Skin tone line at 123° — matches Rust renderer's draw_skin_tone_line.
+  // Skin tone line — matches Rust renderer's draw_skin_tone_line.
   // Solid line from center to rim with fading alpha (0.7 at center, 0.42 at rim).
   if (showSkinTone) {
-    var stAngle = 123 * Math.PI / 180;
+    var stAngle = SKIN_TONE_ANGLE_DEG * Math.PI / 180;
     var stCos = Math.cos(stAngle);
     var stSin = -Math.sin(stAngle); // negate for canvas y-down
     var stSteps = Math.round(radius * 1.5);
+    var stR = SKIN_TONE_RGB[0], stG = SKIN_TONE_RGB[1], stB = SKIN_TONE_RGB[2];
     for (var si = 0; si < stSteps; si++) {
       var t = si / stSteps;
       var sx = Math.round(half + stCos * radius * t);
@@ -441,9 +457,9 @@ function renderToBuffer(size, pixels, densityMode, showSkinTone) {
         var stAlpha = 0.7 * (1.0 - t * 0.4); // match Rust: alpha * (1 - t*0.4)
         var idx = (sy * size + sx) * 4;
         var inv = 1.0 - stAlpha;
-        buf[idx]   = Math.round(buf[idx]   * inv + 180 * stAlpha);
-        buf[idx+1] = Math.round(buf[idx+1] * inv + 120 * stAlpha);
-        buf[idx+2] = Math.round(buf[idx+2] * inv +  60 * stAlpha);
+        buf[idx]   = Math.round(buf[idx]   * inv + stR * stAlpha);
+        buf[idx+1] = Math.round(buf[idx+1] * inv + stG * stAlpha);
+        buf[idx+2] = Math.round(buf[idx+2] * inv + stB * stAlpha);
         buf[idx+3] = 255;
       }
     }

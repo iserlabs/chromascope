@@ -34,10 +34,13 @@ Usage
 3. The vectorscope updates automatically as you edit.
 
 Controls:
-- Density Mode: Switch between Point, Heat Map, and Cloud renders.
-- Harmony Overlay: Show complementary, analogous, triadic, or
-  split-complementary harmony guides.
-- Skin Tone Line: Toggle the skin tone reference line (I-line).
+- Type (density mode): Scatter (single dot per pixel),
+  Heatmap (density-colored frequency map), or Bloom (soft glow).
+- Scheme (harmony overlay): Off, Complementary, Split,
+  Triadic, Tetradic, or Analogous.
+- Rotation: rotate the harmony overlay around the wheel.
+- Zone Width: widen or narrow the harmony zones.
+- Skin: toggle the skin tone reference line (I-line at 123 degrees).
 
 More Info
 ---------

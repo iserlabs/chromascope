@@ -144,14 +144,14 @@
 </head>
 <body>
   <div id="chromascope-root">
-    <div id="scope-canvas-container">
+    <div id="scope-canvas-container" role="img" aria-label="Vectorscope plot — pixel chrominance distribution updates as you edit the active document">
       <canvas id="scope-canvas" style="display:none;" width="1" height="1"></canvas>
       <!-- Explicit width/height match the default scopeSize (300px) so UXP
            reserves the right amount of layout space before the first frame
            lands; without this, panels may shift on first paint. -->
-      <img id="scope-image" width="300" height="300" alt="Chromascope vectorscope visualization" />
+      <img id="scope-image" width="300" height="300" alt="" />
     </div>
-    <div id="controls-container"></div>
+    <div id="controls-container" role="region" aria-label="Chromascope controls"></div>
   </div>
   <script src="core/scope-bundle.js"></script>
   <script src="src/main.js"></script>

@@ -136,8 +136,6 @@ async function init() {
   // 500 was visually identical but 2.8× more pixels to process and encode.
   scopeSize = 300;
 
-  console.log("[main] scopeSize:", scopeSize);
-
   // Initialize core controls UI and settings bridge.
   // scope-bundle.js exposes ChromascopeCore (IIFE) with createControls.
   if (typeof ChromascopeCore !== 'undefined') {
@@ -179,7 +177,6 @@ async function init() {
       function (s) { if (window.__chromascope) window.__chromascope.updateSettings(s); },
       function () { return cachedBaseBuf; }
     );
-    console.log("[test-harness] activated");
   }
 
   // Wait two frames so layout has settled before measuring container width.
@@ -192,7 +189,6 @@ async function init() {
     var w = container.clientWidth || container.offsetWidth;
     if (w > 50) {
       container.style.height = w + "px";
-      console.log("[main] locked container height:", w);
     }
   }
 

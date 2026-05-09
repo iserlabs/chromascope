@@ -343,3 +343,92 @@ describe("applyHarmonyOverlay", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Defensive: short pixel buffer / mis-reported dimensions
+// ---------------------------------------------------------------------------
+
+describe("renderToBuffer — defensive bounds", () => {
+  const SIZE = 32;
+
+  beforeEach(() => {
+    invalidateGraticuleCache();
+  });
+
+  test("does not crash when data is shorter than width*height*3", () => {
+    // Caller claims 4×4 = 48 bytes but provides only 9 (one pixel of red, then
+    // nothing). Without the guard, the inner loop reads past the array end.
+    const pixels = {
+      data: new Uint8Array([255, 0, 0, 255, 0, 0, 255, 0, 0]),
+      width: 4,
+      height: 4,
+    };
+    expect(() => renderToBuffer(SIZE, pixels, "scatter", false)).not.toThrow();
+  });
+
+  test("zero-length data returns graticule unchanged", () => {
+    const graticule = renderGraticule(SIZE);
+    const buf = renderToBuffer(SIZE, {
+      data: new Uint8Array(0), width: 8, height: 8,
+    }, "scatter", false);
+    expect(buf).toEqual(graticule);
+  });
+
+  test("heatmap mode also handles short buffer", () => {
+    const pixels = {
+      data: new Uint8Array([255, 0, 0]), width: 10, height: 10,
+    };
+    expect(() => renderToBuffer(SIZE, pixels, "heatmap", false)).not.toThrow();
+  });
+
+  test("bloom mode also handles short buffer", () => {
+    const pixels = {
+      data: new Uint8Array([255, 0, 0]), width: 10, height: 10,
+    };
+    expect(() => renderToBuffer(SIZE, pixels, "bloom", false)).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Skin tone line — angle/color invariants (regression: previously hardcoded
+// magic numbers, now derived from named constants).
+// ---------------------------------------------------------------------------
+
+describe("skin tone line", () => {
+  const SIZE = 64;
+
+  beforeEach(() => {
+    invalidateGraticuleCache();
+  });
+
+  test("with skin tone enabled, at least one pixel matches the skin RGB at fade alpha", () => {
+    // Black input (no chroma plotted) → only graticule + skin tone line.
+    // The skin RGB (180, 120, 60) blended onto the BG (9, 9, 11) at alpha 0.7
+    // near the center yields pixels with R high and G mid and B low.
+    const pixels = { data: new Uint8Array([0, 0, 0]), width: 1, height: 1 };
+    const buf = renderToBuffer(SIZE, pixels, "scatter", true);
+
+    let warmFound = false;
+    for (let i = 0; i < buf.length; i += 4) {
+      // Match skin-line signature: R substantially > B, G in the middle band.
+      if (buf[i] > 90 && buf[i + 1] > 50 && buf[i + 2] < 80) {
+        warmFound = true;
+        break;
+      }
+    }
+    expect(warmFound).toBe(true);
+  });
+
+  test("with skin tone disabled, no warm-line pixels at the typical fade signature", () => {
+    const pixels = { data: new Uint8Array([0, 0, 0]), width: 1, height: 1 };
+    const withSkin = renderToBuffer(SIZE, pixels, "scatter", true);
+    const withoutSkin = renderToBuffer(SIZE, pixels, "scatter", false);
+
+    let warmWith = 0, warmWithout = 0;
+    for (let i = 0; i < withSkin.length; i += 4) {
+      if (withSkin[i] > 90 && withSkin[i + 1] > 50 && withSkin[i + 2] < 80) warmWith++;
+      if (withoutSkin[i] > 90 && withoutSkin[i + 1] > 50 && withoutSkin[i + 2] < 80) warmWithout++;
+    }
+    expect(warmWith).toBeGreaterThan(warmWithout);
+  });
+});

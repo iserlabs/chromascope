@@ -1,9 +1,14 @@
 const { action, core } = require("photoshop");
 
 const DEBOUNCE_MS = 200;
+// userIdle can fire in bursts (a few times within the same animation frame).
+// A short coalescing window keeps the refresh from running back-to-back when
+// PS has briefly settled, then immediately settled again from a follow-up op.
+const IDLE_DEBOUNCE_MS = 80;
 
 let refreshCallback = null;
 let debounceTimer = null;
+let idleTimer = null;
 let idleListenerActive = false;
 
 const TRACKED_EVENTS = [
@@ -31,9 +36,15 @@ function handleEvent(_eventName, _descriptor) {
 // Per the UXP skill: "Prefer userIdle for heavy re-renders". We pair it with
 // the action listener: actions catch every change, idle catches the moment
 // the user pauses long enough that we can spend cycles on a refresh without
-// fighting the user's interaction.
+// fighting the user's interaction. Debouncing collapses idle bursts into one
+// refresh — burst is harmless but wastes a render pass if the action listener
+// has already scheduled one.
 function handleIdle() {
-  if (refreshCallback) refreshCallback();
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    idleTimer = null;
+    if (refreshCallback) refreshCallback();
+  }, IDLE_DEBOUNCE_MS);
 }
 
 async function startListening(onRefresh) {
@@ -57,6 +68,10 @@ async function stopListening() {
   if (debounceTimer) {
     clearTimeout(debounceTimer);
     debounceTimer = null;
+  }
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
   }
   refreshCallback = null;
 

@@ -26,15 +26,25 @@ function activate(renderFn, getSettingsFn, updateSettingsFn, getLastBufferFn) {
       case "test:extractImage":
         var buf = getLastBufferFn();
         if (!buf) return { type: "test:image", data: null, error: "no render available" };
-        var base64 = "";
-        for (var i = 0; i < buf.length; i++) {
-          base64 += String.fromCharCode(buf[i]);
+        // Chunked fromCharCode keeps the call stack within UXP's argument
+        // limit. Per-byte string concatenation (the previous approach) is
+        // O(n²) and stalls the panel for ~50ms on a 300² buffer.
+        var CHUNK = 0x8000;
+        var parts = "";
+        for (var off = 0; off < buf.length; off += CHUNK) {
+          parts += String.fromCharCode.apply(
+            null,
+            buf.subarray(off, Math.min(off + CHUNK, buf.length))
+          );
         }
+        // Buffer is always size² × 4 RGBA. Round to nearest int so a future
+        // non-power-of-2 size still reports a sane integer dimension.
+        var dim = Math.round(Math.sqrt(buf.length / 4));
         return {
           type: "test:image",
-          data: btoa(base64),
-          width: Math.sqrt(buf.length / 4) | 0,
-          height: Math.sqrt(buf.length / 4) | 0,
+          data: btoa(parts),
+          width: dim,
+          height: dim,
         };
 
       case "test:stop":
