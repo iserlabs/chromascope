@@ -134,5 +134,110 @@ test("generates correct path for index 2", function()
 end)
 
 print()
+print("appendOverlayFlags:")
+
+local function flags(props)
+  return utils.appendOverlayFlags("", props)
+end
+
+local function contains(s, sub)
+  return s:find(sub, 1, true) ~= nil
+end
+
+test("empty props yields no flags", function()
+  assertEquals(flags({}), "")
+end)
+
+test("default scheme=none adds no scheme flag", function()
+  assertEquals(flags({ scheme = "none" }), "")
+end)
+
+test("valid scheme + rotation gets formatted", function()
+  local s = flags({ scheme = "triadic", rotation = 30 })
+  assert(contains(s, '--scheme "triadic"'), "scheme flag missing: " .. s)
+  assert(contains(s, "--rotation 30"), "rotation flag missing: " .. s)
+end)
+
+test("rotation rounds to nearest int and wraps mod 360", function()
+  local s = flags({ scheme = "complementary", rotation = 359.7 })
+  assert(contains(s, "--rotation 0"), "expected wrap to 0, got: " .. s)
+end)
+
+test("invalid scheme is dropped", function()
+  assertEquals(flags({ scheme = "rainbow" }), "")
+end)
+
+test("skinTone=false adds hide flag", function()
+  assert(contains(flags({ skinTone = false }), "--hide-skin-tone"))
+end)
+
+test("skinTone=true does not add hide flag", function()
+  assertEquals(flags({ skinTone = true }), "")
+end)
+
+test("overlay color magenta is accepted (regression: was dropped)", function()
+  assert(contains(flags({ overlayColor = "magenta" }), '--overlay-color "magenta"'))
+end)
+
+test("overlay color white is accepted (regression: was dropped)", function()
+  assert(contains(flags({ overlayColor = "white" }), '--overlay-color "white"'))
+end)
+
+test("overlay color red is rejected (processor does not accept)", function()
+  assertEquals(flags({ overlayColor = "red" }), "")
+end)
+
+test("density=scatter (default) is omitted", function()
+  assertEquals(flags({ density = "scatter" }), "")
+end)
+
+test("density=heatmap forwarded", function()
+  assert(contains(flags({ density = "heatmap" }), '--density "heatmap"'))
+end)
+
+test("density=bloom forwarded", function()
+  assert(contains(flags({ density = "bloom" }), '--density "bloom"'))
+end)
+
+test("density unknown is dropped", function()
+  assertEquals(flags({ density = "explosion" }), "")
+end)
+
+test("colorSpace=hsl (default) is omitted", function()
+  assertEquals(flags({ colorSpace = "hsl" }), "")
+end)
+
+test("colorSpace=ycbcr forwarded", function()
+  assert(contains(flags({ colorSpace = "ycbcr" }), '--color-space "ycbcr"'))
+end)
+
+test("colorSpace=cieluv forwarded", function()
+  assert(contains(flags({ colorSpace = "cieluv" }), '--color-space "cieluv"'))
+end)
+
+test("colorSpace unknown is dropped", function()
+  assertEquals(flags({ colorSpace = "ycch" }), "")
+end)
+
+test("composes all flags together preserving base command", function()
+  local s = utils.appendOverlayFlags('"./bin/processor" render', {
+    scheme = "tetradic", rotation = 90, skinTone = false,
+    overlayColor = "cyan", density = "heatmap", colorSpace = "ycbcr",
+  })
+  assert(contains(s, '"./bin/processor" render'), "base command lost: " .. s)
+  assert(contains(s, '--scheme "tetradic"'))
+  assert(contains(s, "--rotation 90"))
+  assert(contains(s, "--hide-skin-tone"))
+  assert(contains(s, '--overlay-color "cyan"'))
+  assert(contains(s, '--density "heatmap"'))
+  assert(contains(s, '--color-space "ycbcr"'))
+end)
+
+test("rotation=nil does not blow up when scheme is set", function()
+  local s = flags({ scheme = "complementary" })
+  assert(contains(s, "--rotation 0"), "missing rotation default: " .. s)
+end)
+
+print()
 print(string.format("=== Results: %d/%d passed, %d failed ===", passed, total, failed))
 os.exit(failed > 0 and 1 or 0)

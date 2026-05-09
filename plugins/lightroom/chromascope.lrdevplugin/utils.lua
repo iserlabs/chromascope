@@ -94,4 +94,58 @@ function M.framePath(prefix, index)
   return prefix .. "scope_" .. (index - 1) .. ".jpg"
 end
 
+-- ---------------------------------------------------------------------------
+-- Overlay-flag whitelists — must match the processor's CLI accept list.
+-- See packages/processor/src/render/mod.rs (resolve_zone_color, modes,
+-- color spaces) and main.rs (validate_render_options). These tables are the
+-- single source of truth on the Lua side; ImagePipeline.lua re-exports them.
+-- ---------------------------------------------------------------------------
+
+M.VALID_SCHEMES = {
+  complementary = true, splitComplementary = true,
+  triadic = true, tetradic = true, analogous = true,
+}
+
+M.VALID_COLORS = {
+  white = true, yellow = true, cyan = true,
+  green = true, magenta = true, orange = true,
+}
+
+M.VALID_DENSITY = { scatter = true, bloom = true, heatmap = true }
+
+M.VALID_COLOR_SPACE = { hsl = true, ycbcr = true, cieluv = true }
+
+-- Append `--scheme/--rotation/--hide-skin-tone/--overlay-color/--density/
+-- --color-space` flags to a base CLI string based on the dialog `props` table.
+--
+-- Pure function. Does NOT shell-quote (the caller already wraps the binary
+-- path in quotes); whitelists guarantee the appended values are token-safe.
+-- Unknown / default values are dropped to keep the command line minimal,
+-- which makes test diffs and CI logs readable.
+function M.appendOverlayFlags(cmd, props)
+  local scheme = props.scheme
+  if scheme and scheme ~= "none" and M.VALID_SCHEMES[scheme] then
+    cmd = cmd .. string.format(
+      ' --scheme "%s" --rotation %d',
+      scheme, math.floor((props.rotation or 0) + 0.5) % 360
+    )
+  end
+  if props.skinTone == false then
+    cmd = cmd .. ' --hide-skin-tone'
+  end
+  local overlayColor = props.overlayColor
+  if overlayColor and overlayColor ~= "" and M.VALID_COLORS[overlayColor] then
+    cmd = cmd .. string.format(' --overlay-color "%s"', overlayColor)
+  end
+  local density = props.density
+  if density and density ~= "" and density ~= "scatter" and M.VALID_DENSITY[density] then
+    cmd = cmd .. string.format(' --density "%s"', density)
+  end
+  local colorSpace = props.colorSpace
+  if colorSpace and colorSpace ~= "" and colorSpace ~= "hsl" and M.VALID_COLOR_SPACE[colorSpace] then
+    cmd = cmd .. string.format(' --color-space "%s"', colorSpace)
+  end
+  return cmd
+end
+
 return M

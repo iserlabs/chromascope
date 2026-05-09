@@ -38,10 +38,15 @@ Usage
    vectorscope updates automatically.
 
 Controls:
-- Density Mode: Switch between Point, Heat Map, and Cloud renders.
-- Harmony Overlay: Show complementary, analogous, triadic, or
-  split-complementary harmony guides.
-- Skin Tone Line: Toggle the skin tone reference line (I-line).
+- Color Scheme: Off, Complementary, Split, Triadic, Tetradic, or
+  Analogous harmony guides.
+- Overlay Color: Yellow, Cyan, Green, Magenta, Orange, or White.
+- Rotation: rotate the harmony overlay around the wheel.
+- Density: Scatter (single dot per pixel), Heatmap (density-colored
+  frequency map), or Bloom (soft glow).
+- Color Space: HSL, YCbCr, or CIE LUV.
+- Size: 250px / 500px / 700px scope render.
+- Skin color indicator: toggle the I-line at 123 degrees.
 
 Folder Structure
 ----------------

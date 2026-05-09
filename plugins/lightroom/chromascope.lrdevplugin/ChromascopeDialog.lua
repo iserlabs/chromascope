@@ -296,7 +296,32 @@ function ChromascopeDialog.show(context)
         f:row {
           spacing = f:label_spacing(),
           f:radio_button { value = bind "density", title = "Scatter", checked_value = "scatter", font = rbFont },
+          f:radio_button { value = bind "density", title = "Heatmap", checked_value = "heatmap", font = rbFont },
           f:radio_button { value = bind "density", title = "Bloom",   checked_value = "bloom",   font = rbFont },
+        },
+      },
+    },
+
+    f:spacer { height = 2 },
+
+    -- Color Space — controls how RGB pixels map onto the scope wheel.
+    -- HSL keeps consistency with the Photoshop plugin; YCbCr is broadcast standard;
+    -- CIE LUV is perceptually uniform.
+    f:row {
+      spacing = f:label_spacing(),
+      f:static_text {
+        title = "Color Space",
+        width = labelW,
+        font  = rbFont,
+        text_color = labelColor,
+      },
+      f:view {
+        bind_to_object = props,
+        f:row {
+          spacing = f:label_spacing(),
+          f:radio_button { value = bind "colorSpace", title = "HSL",    checked_value = "hsl",    font = rbFont },
+          f:radio_button { value = bind "colorSpace", title = "YCbCr",  checked_value = "ycbcr",  font = rbFont },
+          f:radio_button { value = bind "colorSpace", title = "LUV",    checked_value = "cieluv", font = rbFont },
         },
       },
     },
