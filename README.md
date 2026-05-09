@@ -17,7 +17,7 @@ Works as a native panel in Photoshop (UXP) and as a floating dialog in Lightroom
 
 ### Density modes
 
-Two visualization modes show chrominance distribution at different levels of detail:
+Three visualization modes show chrominance distribution at different levels of detail:
 
 <p align="center">
   <img src="docs/images/warm-scatter.jpg" alt="Scatter mode" width="260">
@@ -25,6 +25,7 @@ Two visualization modes show chrominance distribution at different levels of det
 </p>
 <p align="center">
   <b>Scatter</b> · individual pixel dots &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>Heatmap</b> · density-colored frequency map &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <b>Bloom</b> · radial glow with additive blending
 </p>
 
@@ -101,7 +102,7 @@ The `processor` CLI has three subcommands:
 
 `pipeline` combines decode and render into a single process, saving ~50-100ms of spawn overhead vs. running them separately. `--save-rgb` writes the decoded pixels for overlay-only re-renders.
 
-Render options: `--density` (scatter, bloom), `--scheme` (complementary, triadic, etc.), `--rotation`, `--overlay-color`, `--hide-skin-tone`, `--color-space` (hsl, ycbcr, cieluv).
+Render options: `--density` (scatter, heatmap, bloom), `--scheme` (complementary, splitComplementary, triadic, tetradic, analogous), `--rotation`, `--overlay-color` (white, yellow, cyan, green, magenta, orange), `--hide-skin-tone`, `--color-space` (hsl, ycbcr, cieluv), `--output-format` (jpeg, png).
 
 ## Project structure
 

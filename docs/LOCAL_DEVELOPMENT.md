@@ -171,18 +171,45 @@ cd packages/processor && cargo build --release   # Rust binary (separate)
 ## Testing
 
 ```sh
-# All TypeScript tests
+# All TypeScript + Rust tests
 npx turbo test
 
 # Core library only
 cd packages/core && npm run test
+
+# Photoshop plugin (pure rendering unit tests)
+cd plugins/photoshop && npm run test
 
 # Rust processor tests
 cd packages/processor && cargo test
 
 # Watch mode (core)
 cd packages/core && npm run test:watch
+
+# Lightroom Lua util tests (no LrC SDK needed — pure Lua 5.x)
+lua tests/e2e/lightroom/lua/test_utils.lua
+
+# Lightroom processor smoke (writes scope PNGs, compares against baselines)
+bash tests/e2e/lightroom/smoke.sh
+
+# Photoshop ExtendScript smoke (requires PS running + automation permission)
+node tests/e2e/photoshop/smoke.mjs
 ```
+
+## Linting
+
+```sh
+# Lint everything (root invocation — covers every workspace)
+npm run lint
+
+# Auto-fix what's safe
+npm run lint:fix
+```
+
+`eslint.config.mjs` declares overrides per file family (TypeScript core,
+Photoshop plugin JS, Node-style scripts, browser-side static-site JS).
+If you add a new top-level directory, extend the config with appropriate
+globals/sourceType so `npm run lint` stays clean.
 
 ## Common Tasks
 

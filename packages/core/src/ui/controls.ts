@@ -8,9 +8,10 @@ export interface ControlsCallbacks {
   onSettingsChange: (partial: Partial<ChromascopeSettings>) => void;
 }
 
-const DENSITY_MODES: Array<{ id: DensityModeId; label: string }> = [
-  { id: "scatter", label: "Scatter" },
-  { id: "bloom", label: "Bloom" },
+const DENSITY_MODES: Array<{ id: DensityModeId; label: string; title: string }> = [
+  { id: "scatter", label: "Scatter", title: "Scatter — single bright dot per pixel" },
+  { id: "heatmap", label: "Heatmap", title: "Heatmap — density-colored frequency map" },
+  { id: "bloom", label: "Bloom", title: "Bloom — soft additive glow per cluster" },
 ];
 
 const HARMONY_SCHEMES: Array<{ id: HarmonySchemeId | "none"; label: string; title: string }> = [
