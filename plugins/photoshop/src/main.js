@@ -11,8 +11,10 @@ var showSkinTone = false;
 
 var cachedBaseBuf = null;
 
-// Cleanup handles registered during init(), invoked from hide() to release
-// listeners, timers, and DOM nodes so a re-show starts clean.
+// Cleanup handles registered during init(), invoked from teardown()/destroy()
+// to release listeners, timers, and DOM nodes so a re-load starts clean.
+// (Note: UXP's panel.hide() is unreliable per PS-57284 — destroy is the
+// only reliable teardown hook.)
 var cleanupFns = [];
 
 function registerCleanup(fn) {
@@ -136,7 +138,7 @@ async function init() {
   // 500 was visually identical but 2.8× more pixels to process and encode.
   scopeSize = 300;
 
-  // Initialize core controls UI and settings bridge.
+  // Initialize core controls UI and settings store.
   // scope-bundle.js exposes ChromascopeCore (IIFE) with createControls.
   if (typeof ChromascopeCore !== 'undefined') {
     var _coreSettings = {

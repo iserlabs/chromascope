@@ -82,9 +82,13 @@ UXP panel plugin. Communicates with the core WebView via the message protocol.
 ```sh
 cd plugins/photoshop
 
-npm run build         # One-time build
-npm run dev           # Watch mode (rebuilds on change)
+npm run build         # One-time assembly: copy core HTML + IIFE bundle into core/
+npm run test          # Pure-render unit tests (vitest, no UXP host needed)
 ```
+
+The plugin has no watch script — re-run `npm run build` after editing the
+core or after making changes to plugin source. The Photoshop UXP Developer
+Tool's "Reload" button picks up changes immediately.
 
 **Testing in Photoshop**:
 
@@ -96,10 +100,13 @@ npm run dev           # Watch mode (rebuilds on change)
 
 **Key files**:
 - `manifest.json` -- UXP plugin manifest
-- `src/main.js` -- Plugin entry point, batchPlay calls
-- `src/edits.js` -- Edit bridge (applies corrections back to Photoshop)
-- `index.html` -- Plugin panel HTML (embeds core build)
-- `core/index.html` -- Built core library (copied during build)
+- `src/main.js` -- Panel entry point, init/teardown, settings wiring
+- `src/imaging.js` -- `imaging.getPixels` wrapper (pixel reads)
+- `src/events.js` -- Action + userIdle listeners with debounced refresh
+- `src/rendering.js` -- Pure software renderer (graticule, density modes, harmony overlay)
+- `src/test-harness.js` -- Optional test-mode message handlers
+- `index.html` -- Plugin panel HTML (loads `core/scope-bundle.js` then `src/main.js`)
+- `core/scope-bundle.js` -- Built core IIFE library (copied during build)
 
 ### Lightroom Plugin (`plugins/lightroom`)
 
@@ -116,9 +123,9 @@ Lua plugin for Lightroom Classic. Uses the processor binary to read pixel data.
 **Key files**:
 - `Info.lua` -- Plugin metadata and menu registration
 - `ShowChromascope.lua` -- Main dialog launcher
-- `ChromascopeDialog.lua` -- Floating dialog with vectorscope, controls (density, harmony, rotation, size)
+- `ChromascopeDialog.lua` -- Floating dialog with vectorscope, controls (density, harmony, rotation, color space, size)
 - `ImagePipeline.lua` -- Thumbnail export, single-shot `processor pipeline` invocation (decode+render combined), change detection (recursive djb2 hash of full develop settings), frame alternation, overlay-only re-renders from cached RGB
-- `License.lua` -- License display
+- `utils.lua` -- Pure helpers (settings hashing, frame-index alternation, `appendOverlayFlags` CLI builder with whitelist)
 
 **Note**: The `.lrdevplugin` extension tells Lightroom this is a development plugin (reloads on each launch). Rename to `.lrplugin` for distribution.
 

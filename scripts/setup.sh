@@ -99,34 +99,7 @@ npx turbo test
 ok "All tests passed"
 echo ""
 
-# ─── 6. Set up web app .env.local ─────────────────────────────────────
-
-ENV_FILE="web/.env.local"
-ENV_EXAMPLE="web/.env.example"
-
-if [ ! -f "$ENV_FILE" ]; then
-  if [ -f "$ENV_EXAMPLE" ]; then
-    cp "$ENV_EXAMPLE" "$ENV_FILE"
-    warn "Created $ENV_FILE from .env.example -- fill in your real values"
-  else
-    cat > "$ENV_FILE" <<'EOF'
-# Neon Postgres
-DATABASE_URL=
-
-# Stripe
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-EOF
-    warn "Created $ENV_FILE with placeholder keys -- fill in your real values"
-  fi
-else
-  ok "$ENV_FILE already exists"
-fi
-
-echo ""
-
-# ─── 7. Summary ───────────────────────────────────────────────────────
+# ─── 6. Summary ───────────────────────────────────────────────────────
 
 echo "========================================="
 echo "  Setup complete!"
@@ -134,16 +107,13 @@ echo "========================================="
 echo ""
 echo "  Next steps:"
 echo ""
-echo "  1. Fill in web/.env.local with your"
-echo "     Neon and Stripe credentials."
-echo ""
-echo "  2. Start developing:"
-echo "     npx turbo dev          # all dev servers"
+echo "  1. Start developing:"
+echo "     npx turbo dev                     # core dev server"
 echo "     cd packages/core && npm run dev   # core only"
-echo "     cd web && npm run dev        # web only"
+echo "     npm run build:plugins             # assemble plugin bundles"
 echo ""
 if [ "$HAS_RUST" = false ]; then
-  echo "  3. Install Rust (https://rustup.rs) to build"
+  echo "  2. Install Rust (https://rustup.rs) to build"
   echo "     the processor binary for Lightroom."
   echo ""
 fi
