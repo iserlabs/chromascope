@@ -571,3 +571,110 @@ fn render_all_colorspace_density_combinations() {
         }
     }
 }
+
+// ═══════════════════════════════════════════════════
+// Output format validation
+// ═══════════════════════════════════════════════════
+
+#[test]
+fn render_unknown_output_format_fails() {
+    let data = create_solid_rgb(32, 32, 200, 100, 50);
+    let dir = fixtures_dir();
+    let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let rgb_path = dir.join(format!("fmt_test_{}_{}.rgb", std::process::id(), id));
+    let out_path = dir.join(format!("fmt_test_{}_{}.bin", std::process::id(), id));
+    std::fs::write(&rgb_path, &data).unwrap();
+
+    let status = Command::new(binary_path())
+        .args(["render",
+            "--input",  rgb_path.to_str().unwrap(),
+            "--output", out_path.to_str().unwrap(),
+            "--width",  "32",
+            "--height", "32",
+            "--size",   "128",
+            "--output-format", "webp",  // not supported
+        ])
+        .status().unwrap();
+
+    assert!(!status.success(), "unknown output format should fail validation");
+    std::fs::remove_file(&rgb_path).ok();
+    std::fs::remove_file(&out_path).ok();
+}
+
+#[test]
+fn render_png_output_format_works() {
+    let data = create_solid_rgb(32, 32, 200, 100, 50);
+    let dir = fixtures_dir();
+    let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let rgb_path = dir.join(format!("png_test_{}_{}.rgb", std::process::id(), id));
+    let out_path = dir.join(format!("png_test_{}_{}.png", std::process::id(), id));
+    std::fs::write(&rgb_path, &data).unwrap();
+
+    let status = Command::new(binary_path())
+        .args(["render",
+            "--input",  rgb_path.to_str().unwrap(),
+            "--output", out_path.to_str().unwrap(),
+            "--width",  "32",
+            "--height", "32",
+            "--size",   "128",
+            "--output-format", "png",
+        ])
+        .status().unwrap();
+
+    assert!(status.success(), "png output should succeed");
+    let img = image::open(&out_path).unwrap();
+    assert_eq!(img.width(), 128);
+    assert_eq!(img.height(), 128);
+    std::fs::remove_file(&rgb_path).ok();
+    std::fs::remove_file(&out_path).ok();
+}
+
+#[test]
+fn render_unknown_density_mode_fails() {
+    let data = create_solid_rgb(32, 32, 200, 100, 50);
+    let dir = fixtures_dir();
+    let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let rgb_path = dir.join(format!("dm_test_{}_{}.rgb", std::process::id(), id));
+    let out_path = dir.join(format!("dm_test_{}_{}.jpg", std::process::id(), id));
+    std::fs::write(&rgb_path, &data).unwrap();
+
+    let status = Command::new(binary_path())
+        .args(["render",
+            "--input",  rgb_path.to_str().unwrap(),
+            "--output", out_path.to_str().unwrap(),
+            "--width",  "32",
+            "--height", "32",
+            "--size",   "128",
+            "--density", "explosion",
+        ])
+        .status().unwrap();
+
+    assert!(!status.success(), "unknown density mode should fail validation");
+    std::fs::remove_file(&rgb_path).ok();
+    std::fs::remove_file(&out_path).ok();
+}
+
+#[test]
+fn render_unknown_color_space_fails() {
+    let data = create_solid_rgb(32, 32, 200, 100, 50);
+    let dir = fixtures_dir();
+    let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let rgb_path = dir.join(format!("cs_test_{}_{}.rgb", std::process::id(), id));
+    let out_path = dir.join(format!("cs_test_{}_{}.jpg", std::process::id(), id));
+    std::fs::write(&rgb_path, &data).unwrap();
+
+    let status = Command::new(binary_path())
+        .args(["render",
+            "--input",  rgb_path.to_str().unwrap(),
+            "--output", out_path.to_str().unwrap(),
+            "--width",  "32",
+            "--height", "32",
+            "--size",   "128",
+            "--color-space", "ycch",
+        ])
+        .status().unwrap();
+
+    assert!(!status.success(), "unknown color space should fail validation");
+    std::fs::remove_file(&rgb_path).ok();
+    std::fs::remove_file(&out_path).ok();
+}

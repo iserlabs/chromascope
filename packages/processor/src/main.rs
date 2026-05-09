@@ -162,6 +162,8 @@ fn cmd_decode(args: DecodeArgs) -> anyhow::Result<()> {
     Ok(())
 }
 
+const VALID_OUTPUT_FORMATS: &[&str] = &["jpeg", "png"];
+
 fn validate_render_options(density: &str, color_space: &str, scheme: Option<&str>) -> anyhow::Result<()> {
     const VALID_DENSITIES: &[&str] = &["scatter", "heatmap", "bloom"];
     if !VALID_DENSITIES.contains(&density) {
@@ -194,15 +196,51 @@ fn validate_render_options(density: &str, color_space: &str, scheme: Option<&str
     Ok(())
 }
 
-fn cmd_render(args: RenderArgs) -> anyhow::Result<()> {
-    if args.width == 0 || args.height == 0 {
+fn validate_output_format(fmt: &str) -> anyhow::Result<()> {
+    if !VALID_OUTPUT_FORMATS.contains(&fmt) {
+        return Err(anyhow::anyhow!(
+            "Unknown output format '{}'. Valid: {}",
+            fmt, VALID_OUTPUT_FORMATS.join(", ")
+        ));
+    }
+    Ok(())
+}
+
+fn validate_dims(width: u32, height: u32, size: u32) -> anyhow::Result<()> {
+    if width == 0 || height == 0 {
         return Err(anyhow::anyhow!("Width and height must be greater than zero"));
     }
-    if args.size == 0 {
+    if size == 0 {
         return Err(anyhow::anyhow!("Output size must be greater than zero"));
     }
+    Ok(())
+}
 
+fn output_format_from(fmt: &str) -> image::ImageFormat {
+    if fmt == "png" {
+        image::ImageFormat::Png
+    } else {
+        image::ImageFormat::Jpeg
+    }
+}
+
+fn save_scope(scope: &image::RgbImage, output: &PathBuf, fmt: image::ImageFormat) -> anyhow::Result<()> {
+    scope.save_with_format(output, fmt)
+        .map_err(|e| anyhow::anyhow!("Failed to save {:?}: {}", output, e))
+}
+
+fn make_harmony(scheme: Option<&str>, rotation_deg: f64, overlay_color: &str) -> Option<render::HarmonyConfig> {
+    scheme.map(|s| render::HarmonyConfig {
+        scheme: s.to_string(),
+        rotation_deg,
+        overlay_color: overlay_color.to_string(),
+    })
+}
+
+fn cmd_render(args: RenderArgs) -> anyhow::Result<()> {
+    validate_dims(args.width, args.height, args.size)?;
     validate_render_options(&args.density, &args.color_space, args.scheme.as_deref())?;
+    validate_output_format(&args.output_format)?;
 
     let raw = fs::read(&args.input)
         .map_err(|e| anyhow::anyhow!("Failed to read {:?}: {}", args.input, e))?;
@@ -219,32 +257,20 @@ fn cmd_render(args: RenderArgs) -> anyhow::Result<()> {
         ));
     }
 
-    let harmony = args.scheme.as_deref().map(|s| render::HarmonyConfig {
-        scheme: s.to_string(),
-        rotation_deg: args.rotation,
-        overlay_color: args.overlay_color.clone(),
-    });
+    let harmony = make_harmony(args.scheme.as_deref(), args.rotation, &args.overlay_color);
 
-    let scope = render::render_vectorscope(&raw, args.width, args.height, args.size, harmony.as_ref(), !args.hide_skin_tone, &args.density, &args.color_space);
+    let scope = render::render_vectorscope(
+        &raw, args.width, args.height, args.size,
+        harmony.as_ref(), !args.hide_skin_tone, &args.density, &args.color_space,
+    );
 
-    match args.output_format.as_str() {
-        "png" => scope.save_with_format(&args.output, image::ImageFormat::Png),
-        _ => scope.save_with_format(&args.output, image::ImageFormat::Jpeg),
-    }
-    .map_err(|e| anyhow::anyhow!("Failed to save {:?}: {}", args.output, e))?;
-
-    Ok(())
+    save_scope(&scope, &args.output, output_format_from(&args.output_format))
 }
 
 fn cmd_pipeline(args: PipelineArgs) -> anyhow::Result<()> {
-    if args.width == 0 || args.height == 0 {
-        return Err(anyhow::anyhow!("Width and height must be greater than zero"));
-    }
-    if args.size == 0 {
-        return Err(anyhow::anyhow!("Output size must be greater than zero"));
-    }
-
+    validate_dims(args.width, args.height, args.size)?;
     validate_render_options(&args.density, &args.color_space, args.scheme.as_deref())?;
+    validate_output_format(&args.output_format)?;
 
     let img = image::open(&args.input)
         .map_err(|e| anyhow::anyhow!("Failed to open {:?}: {}", args.input, e))?;
@@ -258,19 +284,12 @@ fn cmd_pipeline(args: PipelineArgs) -> anyhow::Result<()> {
             .map_err(|e| anyhow::anyhow!("Failed to write RGB {:?}: {}", rgb_path, e))?;
     }
 
-    let harmony = args.scheme.as_deref().map(|s| render::HarmonyConfig {
-        scheme: s.to_string(),
-        rotation_deg: args.rotation,
-        overlay_color: args.overlay_color.clone(),
-    });
+    let harmony = make_harmony(args.scheme.as_deref(), args.rotation, &args.overlay_color);
 
-    let scope = render::render_vectorscope(raw, args.width, args.height, args.size, harmony.as_ref(), !args.hide_skin_tone, &args.density, &args.color_space);
+    let scope = render::render_vectorscope(
+        raw, args.width, args.height, args.size,
+        harmony.as_ref(), !args.hide_skin_tone, &args.density, &args.color_space,
+    );
 
-    match args.output_format.as_str() {
-        "png" => scope.save_with_format(&args.output, image::ImageFormat::Png),
-        _ => scope.save_with_format(&args.output, image::ImageFormat::Jpeg),
-    }
-    .map_err(|e| anyhow::anyhow!("Failed to save {:?}: {}", args.output, e))?;
-
-    Ok(())
+    save_scope(&scope, &args.output, output_format_from(&args.output_format))
 }
