@@ -13,13 +13,13 @@
   ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.59.1",
-    "@tailwindcss/cli": "^4.2.4",
-    "eslint": "^10.2.1",
-    "pixelmatch": "^7.1.0",
+    "@playwright/test": "^1.61.1",
+    "@tailwindcss/cli": "^4.3.2",
+    "eslint": "^10.6.0",
+    "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0",
     "turbo": "^2",
-    "typescript-eslint": "^8.59.0"
+    "typescript-eslint": "^8.62.1"
   },
   "scripts": {
     "build": "turbo run build",
