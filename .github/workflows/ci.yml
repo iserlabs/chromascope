@@ -11,7 +11,7 @@ jobs:
     name: Core (TypeScript)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 20
@@ -24,7 +24,7 @@ jobs:
     name: Processor (Rust)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -37,7 +37,7 @@ jobs:
     name: Visual Regression (Rust)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           lfs: true
       - uses: dtolnay/rust-toolchain@stable
