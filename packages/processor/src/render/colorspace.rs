@@ -92,7 +92,7 @@ pub(super) fn map_pixels(rgb_data: &[u8], width: u32, height: u32, center: f64, 
     let mut points = Vec::with_capacity(total);
 
     // Iterate by chunks to let the bounds-check elider see fixed RGB triplets.
-    for chunk in rgb_data.chunks_exact(3).take(total) {
+    for chunk in rgb_data.as_chunks::<3>().0.iter().take(total) {
         let r = chunk[0] as f64;
         let g = chunk[1] as f64;
         let b = chunk[2] as f64;
