@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/kevinkiklee/chromascope.git"
   },
-  "packageManager": "npm@11.20.0",
+  "packageManager": "npm@11.21.0",
   "workspaces": [
     "packages/*",
     "plugins/*"
